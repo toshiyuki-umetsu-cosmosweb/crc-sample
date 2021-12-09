@@ -19,15 +19,15 @@ static void generate_crc_table(crc16_calculator_t *calculator);
 void
 crc16_calculator_init(crc16_calculator_t *calculator,
         uint16_t initial_value, uint16_t polynomial, uint16_t final_xor_value,
-	bool is_input_reflected, bool is_result_reflected)
+        bool is_input_reflected, bool is_result_reflected)
 {
     if (calculator != NULL) {
         (*calculator).initial_value = initial_value;
         (*calculator).polynomial = polynomial;
-	(*calculator).final_xor_value = final_xor_value;
+        (*calculator).final_xor_value = final_xor_value;
         (*calculator).is_input_reflected = is_input_reflected;
         (*calculator).is_result_reflected = is_result_reflected;
-	generate_crc_table(calculator);
+        generate_crc_table(calculator);
         crc16_calculator_reset(calculator);
     }
 
@@ -41,16 +41,16 @@ static void
 generate_crc_table(crc16_calculator_t *calculator)
 {
     for (uint32_t divident = 0u; divident < 256u; divident++) {
-	uint16_t value = (uint16_t)(divident) << 8u;
-	for (uint32_t bit = 0u; bit < 8u; bit++) {
-	    if ((value & 0x8000) != 0u) {
-		value <<= 1u;
-		value ^= (*calculator).polynomial;
-	    } else {
-		value <<= 1u;
-	    }
-	}
-	calculator->table[divident] = value;
+        uint16_t value = (uint16_t)(divident) << 8u;
+        for (uint32_t bit = 0u; bit < 8u; bit++) {
+            if ((value & 0x8000) != 0u) {
+                value <<= 1u;
+                value ^= (*calculator).polynomial;
+            } else {
+                value <<= 1u;
+            }
+        }
+        calculator->table[divident] = value;
     }
 
     return ;
@@ -65,7 +65,7 @@ void
 crc16_calculator_reset(crc16_calculator_t *calculator)
 {
     if (calculator != NULL) {
-	calculator->crc = calculator->initial_value;
+        calculator->crc = calculator->initial_value;
     }
 
     return ;
@@ -82,14 +82,14 @@ uint16_t
 crc16_calculator_append(crc16_calculator_t *calculator, const void *data, size_t len)
 {
     if ((data != NULL) && (len > 0)) {
-	const uint8_t *input_data = (const uint8_t*)(data);
-	for (uint32_t n = 0u; n < len; n++) {
-	    uint16_t crc = (*calculator).crc;
-	    uint8_t d = (*calculator).is_input_reflected
-		    ? swap_ui8(input_data[n]) : input_data[n];
-	    uint8_t pos = (uint8_t)(((crc >> 8u) ^ d) & 0xFFu);
-	    (*calculator).crc = (crc << 8u) ^ (*calculator).table[pos];
-	}
+        const uint8_t *input_data = (const uint8_t*)(data);
+        for (uint32_t n = 0u; n < len; n++) {
+            uint16_t crc = (*calculator).crc;
+            uint8_t d = (*calculator).is_input_reflected
+                    ? swap_ui8(input_data[n]) : input_data[n];
+            uint8_t pos = (uint8_t)(((crc >> 8u) ^ d) & 0xFFu);
+            (*calculator).crc = (crc << 8u) ^ (*calculator).table[pos];
+        }
     }
 
     return crc16_calculator_get(calculator);
@@ -106,14 +106,14 @@ crc16_calculator_get(const crc16_calculator_t *calculator)
     uint16_t retval;
 
     if (calculator != NULL) {
-	uint16_t  value = (*calculator).crc ^ (*calculator).final_xor_value;
-	if ((*calculator).is_result_reflected) {
-	    retval = swap_ui16(value);
-	} else {
-	    retval = value;
-	}
+        uint16_t  value = (*calculator).crc ^ (*calculator).final_xor_value;
+        if ((*calculator).is_result_reflected) {
+            retval = swap_ui16(value);
+        } else {
+            retval = value;
+        }
     } else {
-	retval = 0u;
+        retval = 0u;
     }
 
     return retval;
@@ -134,33 +134,33 @@ crc16_calculator_get(const crc16_calculator_t *calculator)
  */
 uint16_t
 crc16_calculate(const void *data, size_t len,
-	uint16_t initial_value, uint16_t polynomial,
-	uint16_t final_xor_value, bool is_input_reflected,
-	bool is_result_reflected)
+        uint16_t initial_value, uint16_t polynomial,
+        uint16_t final_xor_value, bool is_input_reflected,
+        bool is_result_reflected)
 {
     uint16_t crc = initial_value;
 
     if ((data != NULL) && (len > 0u)) {
-	const uint8_t *input_data = (const uint8_t*)(data);
+        const uint8_t *input_data = (const uint8_t*)(data);
 
-	for (uint32_t n = 0u; n < len; n++) {
-	    uint8_t d = (is_input_reflected)
-		    ? swap_ui8(input_data[n]) : input_data[n];
-	    crc ^= (uint16_t)(d) << 8u;
-	    for (int32_t bit = 0u; bit < 8u; bit++) {
-		if ((crc & 0x8000) != 0u) {
-		    crc = (crc << 1u) ^ polynomial;
-		} else {
-		    crc <<= 1u;
-		}
-	    }
-	}
+        for (uint32_t n = 0u; n < len; n++) {
+            uint8_t d = (is_input_reflected)
+                    ? swap_ui8(input_data[n]) : input_data[n];
+            crc ^= (uint16_t)(d) << 8u;
+            for (int32_t bit = 0u; bit < 8u; bit++) {
+                if ((crc & 0x8000) != 0u) {
+                    crc = (crc << 1u) ^ polynomial;
+                } else {
+                    crc <<= 1u;
+                }
+            }
+        }
     }
 
     crc ^= final_xor_value;
 
     if (is_result_reflected) {
-	crc = swap_ui16(crc);
+        crc = swap_ui16(crc);
     }
 
     return crc;
