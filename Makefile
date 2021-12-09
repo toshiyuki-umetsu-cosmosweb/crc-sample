@@ -12,7 +12,7 @@ crc8_sample : crc8_sample.o misc_functions.o crc8.o
 crc16_sample : crc16_sample.o misc_functions.o crc16.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-crc32_sample : crc32_sample.o misc_functions.o
+crc32_sample : crc32_sample.o misc_functions.o crc32.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o : %.c Makefile
