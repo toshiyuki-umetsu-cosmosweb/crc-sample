@@ -7,53 +7,8 @@
 #include "misc_functions.h"
 #include "crc16.h"
 
-#if 0
-/**
- * CRCを計算する 
- *
- * @param buf CRC32を計算する対象のデータ
- * @param len CRC32を計算する対象の長さ
- * @return CRC32値
- */
-uint32_t
-crcPT(const uint8_t *buf, size_t len)
-{
-    uint16_t crc = 0;
-
-    for (uint32_t i = 0u; i < len; i++) {
-#if 0
-	// Normal.
-	crc ^= (uint16_t)(buf[i]) << 8u;
-	for (int32_t i = 0; i < 8; i++) {
-	    if ((crc & 0x8000) != 0) {
-		crc = (uint16_t)((crc << 1) ^ CRC16_BITS);
-	    } else {
-		crc <<= 1u;
-	    }
-	}
-#elif 0
-	// Reverse.
-	uint8_t d = swap_ui8(buf[i]);
-	crc ^= (uint16_t)(d) << 8u;
-	for (int32_t i = 0; i < 8; i++) {
-	    if ((crc & 0x8000) != 0) {
-		crc = (uint16_t)((crc << 1) ^ CRC16_BITS);
-	    } else {
-		crc <<= 1u;
-	    }
-	}
-#else
-	//uint8_t d = swap_ui8(buf[i]);
-	uint8_t d = (buf[i]);
-	uint8_t pos = (uint8_t)((crc >> 8) ^ d);
-	crc = (uint16_t)((crc << 8u) ^ (uint16_t)(CRCPTTable[pos]));
-#endif
-    }
-    //return swap_ui16(crc);
-    return (crc);
-}
-#endif
-
+// CRC calculator object.
+// Allocate at static RAM in this sample.
 static crc16_calculator_t Calculator;
 
 int32_t
@@ -74,6 +29,7 @@ main(int32_t ac, char **av)
 	return 0;
     }
 
+    // Parse arguments.
     uint16_t initial_value = 0u;
     uint16_t polynomial = 0x1021; // CRC16 CCIT_ZERO
     uint16_t final_xor_value = 0x0;
@@ -123,20 +79,20 @@ main(int32_t ac, char **av)
     crc16_calculator_init(&Calculator, initial_value, polynomial,
 	    final_xor_value, is_input_reflected, is_result_reflected);
 
+    // Calcuating sample.
     while (arg_pos < ac) {
 	const char *input_str = av[arg_pos];
 	size_t len = strlen(input_str);
-#if 0
-	uint16_t crc = crcPT((const uint8_t*)(input_str), len);
-#else
-	crc16_calculator_reset(&Calculator);
-	uint16_t crc = crc16_calculator_append(&Calculator, input_str, len);
 
+	// Reset calcuation value.
+	crc16_calculator_reset(&Calculator);
+	// Calculate
+	uint16_t crc = crc16_calculator_append(&Calculator, input_str, len);
 	uint16_t crc_without_lut = crc16_calculate(input_str, len,
 		initial_value, polynomial, final_xor_value, 
 		is_input_reflected, is_result_reflected);
-#endif
 
+	// Print results.
 	printf("\'%s\' => 0x%04x(UseLut) 0x%04x(UnuseLUT)\n",
 		input_str, crc, crc_without_lut);
 	arg_pos++;
