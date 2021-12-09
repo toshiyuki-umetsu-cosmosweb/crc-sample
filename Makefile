@@ -1,5 +1,6 @@
 TARGETS = crc8_sample crc16_sample crc32_sample
-CFLAGS = -Wall -Werror -std=c99
+#CFLAGS = -Wall -Werror -std=c99
+CFLAGS = -Wall -std=c99
 
 .PHONY : all clean 
 

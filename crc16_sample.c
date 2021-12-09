@@ -5,42 +5,9 @@
 #include <string.h>
 
 #include "misc_functions.h"
+#include "crc16.h"
 
-#define USE_REVERSE_CALC (1u)
-
-static const uint16_t CRC16_BITS = 0x1021;
-//static const uint16_t CRC16_BITS = 0x8408;
-
-/**
- * CRC16 計算用テーブル。
- *     CRC更新時、現在のCRC値の下位8bitと更新用データにより決まる定数との演算に置き換えられるので
- *     256エントリのテーブルに置換できる。
- */
-static uint16_t CRCPTTable[256u];
-
-static void
-make_CRC_LUT(void)
-{
-    for (uint32_t i = 0u; i < 256u; i++) {
-	uint8_t d = i;
-	uint16_t crc = (uint16_t)(d) << 8u;
-	for (uint32_t bit = 0; bit < 8u; bit++) {
-	    if ((crc & 0x8000) != 0u) {
-		crc <<= 1;
-		crc ^= CRC16_BITS;
-	    } else {
-		crc <<= 1;
-	    }
-	}
-	printf("[%d]=%04x\n", i, crc);
-	CRCPTTable[i] = crc;
-    }
-
-
-    return ;
-}
-
-
+#if 0
 /**
  * CRCを計算する 
  *
@@ -85,18 +52,89 @@ crcPT(const uint8_t *buf, size_t len)
     //return swap_ui16(crc);
     return (crc);
 }
+#endif
+
+static crc16_calculator_t Calculator;
 
 int32_t
 main(int32_t ac, char **av)
 {
-    make_CRC_LUT();
+    if (ac <= 1) {
+	printf("usage:\n");
+	printf("  crc16_sample [options] str1 [str2 [...]]\n");
+	printf("options:\n");
+	printf("  --initial value# : Specify initial value.\n");
+	printf("                     Default is 0x0000.\n");
+	printf("  --polynomial polynomial# : Specify polynomial value.\n");
+	printf("                             Default is 0x1021.\n");
+	printf("  --final_xor_value value# : Specify final XOR value.\n");
+	printf("                             Default is 0x0.\n");
+	printf("  --input_reflected : Specify input reflected.\n");
+	printf("  --result_reflected : Specify result reflected.\n");
+	return 0;
+    }
 
-    for (int32_t i = 1; i < ac; i++) {
-	const char *input_str = av[i];
+    uint16_t initial_value = 0u;
+    uint16_t polynomial = 0x1021; // CRC16 CCIT_ZERO
+    uint16_t final_xor_value = 0x0;
+    bool is_input_reflected = false;
+    bool is_result_reflected = false;
+    int32_t arg_pos = 1L;
+    while (arg_pos < ac) {
+	if (av[arg_pos][0L] == '-') {
+	    if (strcmp(av[arg_pos], "--initial") == 0) {
+		if ((arg_pos + 1L) >= ac) {
+		    fprintf(stderr, "Too few arguments for %s.", av[arg_pos]);
+		    return EXIT_FAILURE;
+		} else {
+		    initial_value = (uint16_t)(strtoul(
+			    av[arg_pos + 1L], NULL, 0u));
+		    arg_pos++;
+		}
+	    } else if (strcmp(av[arg_pos], "--polynomial") == 0L) {
+		if ((arg_pos + 1L) >= ac) {
+		    fprintf(stderr, "Too few arguments for %s.", av[arg_pos]);
+		    return EXIT_FAILURE;
+		} else {
+		    polynomial = strtoul(av[arg_pos + 1], NULL, 0);
+		    arg_pos++;
+		}
+	    } else if (strcmp(av[arg_pos], "--final_xor_value") == 0L) {
+		if ((arg_pos + 1L) >= ac) {
+		    fprintf(stderr, "Too few arguments for %s.", av[arg_pos]);
+		} else {
+		    final_xor_value = (uint16_t)(strtoul(
+			    av[arg_pos + 1L], NULL, 0u));
+		    arg_pos++;
+		}
+	    } else if (strcmp(av[arg_pos], "--input_reflected") == 0L) {
+		is_input_reflected = true;
+	    } else if (strcmp(av[arg_pos], "--result_reflected") == 0L) {
+		is_result_reflected = true;
+	    } else {
+		fprintf(stderr, "Unknown option %s\n", av[arg_pos]);
+		return EXIT_FAILURE;
+	    }
+	} else {
+	    break;
+	}
+	arg_pos++;
+    }
+    crc16_calculator_init(&Calculator, initial_value, polynomial,
+	    final_xor_value, is_input_reflected, is_result_reflected);
+
+    while (arg_pos < ac) {
+	const char *input_str = av[arg_pos];
 	size_t len = strlen(input_str);
+#if 0
 	uint16_t crc = crcPT((const uint8_t*)(input_str), len);
+#else
+	crc16_calculator_reset(&Calculator);
+	uint16_t crc = crc16_calculator_append(&Calculator, input_str, len);
+#endif
 
 	printf("\'%s\' => 0x%04x\n", input_str, crc);
+	arg_pos++;
     }
 
     return 0;
