@@ -1,6 +1,12 @@
 #ifndef CRC16_H
 #define CRC16_H
 
+/*
+ * CRC-16  Calculation sample.
+ * 
+ * Refer : http://www.sunshine2k.de/coding/javascript/crc/crc_js.html
+ */
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -31,8 +37,10 @@ uint16_t crc16_calculator_append(crc16_calculator_t *calculator,
 uint16_t crc16_calculator_get(const crc16_calculator_t *calculator);
 
 // Unuse LUT function.
-uint16_t crc16_calculate(uint16_t initial_value, uint16_t polinomial,
-	bool is_input_reflected, bool is_result_reflected);
+uint16_t crc16_calculate(const void *data, size_t len,
+	uint16_t initial_value, uint16_t polynomial,
+	uint16_t final_xor_value, bool is_input_reflected,
+	bool is_result_reflected);
 
 #ifdef __cplusplus
 }

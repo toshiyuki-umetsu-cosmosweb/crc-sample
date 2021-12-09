@@ -94,6 +94,12 @@ crc16_calculator_append(crc16_calculator_t *calculator, const void *data, size_t
 
     return crc16_calculator_get(calculator);
 }
+/**
+ * Get CRC result.
+ *
+ * @param calculator CRC calculator object.
+ * @return CRC result.
+ */
 uint16_t
 crc16_calculator_get(const crc16_calculator_t *calculator)
 {
@@ -113,7 +119,50 @@ crc16_calculator_get(const crc16_calculator_t *calculator)
     return retval;
 }
 
-// Unuse LUT function.
-uint16_t crc16_calculate(uint16_t initial_value, uint16_t polinomial,
-        bool is_input_reflected, bool is_result_reflected);
+/**
+ * Calculate CRC value.
+ *
+ * @param data Target data.
+ * @param len Length in bytes of data.
+ * @param initial_value Initial value.
+ * @param polynomial Generator polynomial.
+ *                  ex) 'x16 + x8 + x3 + 1' indicate 0x0109.
+ * @param final_xor_value Final XOR value.
+ * @param is_input_reflected Swap LSB from MSB of input byte.
+ * @param is_result_reflected Swap LSB from MSB of input byte.
+ * @return CRC result.
+ */
+uint16_t
+crc16_calculate(const void *data, size_t len,
+	uint16_t initial_value, uint16_t polynomial,
+	uint16_t final_xor_value, bool is_input_reflected,
+	bool is_result_reflected)
+{
+    uint16_t crc = initial_value;
+
+    if ((data != NULL) && (len > 0u)) {
+	const uint8_t *input_data = (const uint8_t*)(data);
+
+	for (uint32_t n = 0u; n < len; n++) {
+	    uint8_t d = (is_input_reflected)
+		    ? swap_ui8(input_data[n]) : input_data[n];
+	    crc ^= (uint16_t)(d) << 8u;
+	    for (int32_t bit = 0u; bit < 8u; bit++) {
+		if ((crc & 0x8000) != 0u) {
+		    crc = (crc << 1u) ^ polynomial;
+		} else {
+		    crc <<= 1u;
+		}
+	    }
+	}
+    }
+
+    crc ^= final_xor_value;
+
+    if (is_result_reflected) {
+	crc = swap_ui16(crc);
+    }
+
+    return crc;
+}
 

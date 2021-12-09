@@ -131,9 +131,14 @@ main(int32_t ac, char **av)
 #else
 	crc16_calculator_reset(&Calculator);
 	uint16_t crc = crc16_calculator_append(&Calculator, input_str, len);
+
+	uint16_t crc_without_lut = crc16_calculate(input_str, len,
+		initial_value, polynomial, final_xor_value, 
+		is_input_reflected, is_result_reflected);
 #endif
 
-	printf("\'%s\' => 0x%04x\n", input_str, crc);
+	printf("\'%s\' => 0x%04x(UseLut) 0x%04x(UnuseLUT)\n",
+		input_str, crc, crc_without_lut);
 	arg_pos++;
     }
 
