@@ -6,7 +6,7 @@ CFLAGS = -Wall -std=c99
 
 all : $(TARGETS)
 
-crc8_sample : crc8_sample.o misc_functions.o
+crc8_sample : crc8_sample.o misc_functions.o crc8.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 crc16_sample : crc16_sample.o misc_functions.o crc16.o
